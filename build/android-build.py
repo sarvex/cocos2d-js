@@ -123,9 +123,9 @@ def copy_resources(target, app_android_root):
     # copy resources
     os.mkdir(assets_dir)
 
-    assets_res_dir = assets_dir + "/res";
-    assets_scripts_dir = assets_dir + "/src";
-    assets_jsb_dir = assets_dir + "/script";
+    assets_res_dir = f"{assets_dir}/res";
+    assets_scripts_dir = f"{assets_dir}/src";
+    assets_jsb_dir = f"{assets_dir}/script";
     os.mkdir(assets_res_dir);
     os.mkdir(assets_scripts_dir);
     os.mkdir(assets_jsb_dir);

@@ -91,7 +91,7 @@ class GitArchiver(object):
     def load_json_file(self, file_path):
         import json
         if not path.isfile(file_path):
-            raise Exception("Could not find (%s)" % (file_path))
+            raise Exception(f"Could not find ({file_path})")
 
         with open(file_path) as data_file:
             data = json.load(data_file)
@@ -110,7 +110,7 @@ class GitArchiver(object):
 
         import zipfile
         if not zipfile.is_zipfile(zip_file_path):
-            raise UnrecognizedFormat("%s is not a zip file" % zip_file_path)
+            raise UnrecognizedFormat(f"{zip_file_path} is not a zip file")
 
         file_paths = []
         print("==> Extracting files, please wait ...")
@@ -142,8 +142,7 @@ class GitArchiver(object):
                     finally:
                         f.close()
                         del data
-                unix_attributes = info.external_attr >> 16
-                if unix_attributes:
+                if unix_attributes := info.external_attr >> 16:
                     os.chmod(target, unix_attributes)
         finally:
             z.close()
@@ -155,7 +154,7 @@ class GitArchiver(object):
         for rule in rules:
             ret = rule.replace('.', '\\.')
             ret = ret.replace('*', '.*')
-            ret = "%s" % ret
+            ret = f"{ret}"
             ret_rules.append(ret)
 
         return ret_rules
@@ -216,7 +215,7 @@ class GitArchiver(object):
         else:
             raise RuntimeError("Unknown format: {f}".format(f=output_format))
 
-        print("Making archive: (%s) , please wait ..." % output_path)
+        print(f"Making archive: ({output_path}) , please wait ...")
         for file_path in self.extra:
             if not dry_run:
                 if self.verbose:
@@ -244,11 +243,19 @@ class GitArchiver(object):
         # Execute download-deps.py in root folder
         import subprocess
         repo_x_path = path.join(self.main_repo_abspath, "frameworks", "js-bindings", "cocos2d-x")
-        subprocess.call("python %s -d -f" % (path.join(repo_x_path, "download-deps.py")), shell=True, cwd=repo_x_path)
+        subprocess.call(
+            f'python {path.join(repo_x_path, "download-deps.py")} -d -f',
+            shell=True,
+            cwd=repo_x_path,
+        )
 
         # Execute download-bin.py in cocos2d-console folder
         console_path = path.join(self.main_repo_abspath, "tools", "cocos2d-console")
-        subprocess.call("python %s -d -f" % (path.join(console_path, "download-bin.py")), shell=True, cwd=console_path)
+        subprocess.call(
+            f'python {path.join(console_path, "download-bin.py")} -d -f',
+            shell=True,
+            cwd=console_path,
+        )
 
         # Check config.json to insert a zip file content to the final generated zip file
         extra_folders = []
@@ -266,7 +273,9 @@ class GitArchiver(object):
             extra_file_paths = self.unpack_zipfile(zip_file_path, self.main_repo_abspath)
             for file_path in extra_file_paths:
                 if file_path.find(extra_folder_path) == -1:
-                    raise Exception("Couldn't find extra folder path (%s) in (%s)!" % (extra_folder_path, file_path))
+                    raise Exception(
+                        f"Couldn't find extra folder path ({extra_folder_path}) in ({file_path})!"
+                    )
 
                 path_in_zip = extra_to_zip_file + file_path[(len(extra_folder_path)):]
                 add(file_path, path_in_zip)
@@ -285,7 +294,7 @@ class GitArchiver(object):
             if os.path.exists(tmp_dir):
                 shutil.rmtree(tmp_dir)
             os.makedirs(tmp_dir)
-            print("tmp dir is : %s" % tmp_dir)
+            print(f"tmp dir is : {tmp_dir}")
 
             if output_format == 'zip':
                 self.unpack_zipfile(path.abspath(output_path), tmp_dir)
@@ -297,7 +306,7 @@ class GitArchiver(object):
 
             out_file_name = path.splitext(path.basename(output_path))[0]
             unpack_path = os.path.join(tmp_dir, out_file_name)
-            print("engine unpacked path is : %s" % unpack_path)
+            print(f"engine unpacked path is : {unpack_path}")
 
             # run ant tasks
             ant_cmd_path = os.path.join(unpack_path, "frameworks", "cocos2d-html5", "tools")
@@ -526,8 +535,7 @@ class GitArchiver(object):
         for submodule_path in self.read_shell("git submodule --quiet foreach 'pwd'", repo_abspath).splitlines():
             # In order to get output path we need to exclude repository path from submodule_path.
             submodule_path = path.relpath(submodule_path, self.main_repo_abspath)
-            for file_path in self.list_files(submodule_path):
-                yield file_path
+            yield from self.list_files(submodule_path)
 
     @staticmethod
     def run_shell(cmd, cwd=None):
